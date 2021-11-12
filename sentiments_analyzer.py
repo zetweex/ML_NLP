@@ -34,17 +34,25 @@ train_X = [
     "i don't like the rain",
     "i'm so happy because i'm with my love",
     "i don't like spain, because this country smell bad",
-    "The Christmas markets are beautiful"
+    "the Christmas markets are beautiful",
+    "she did not like Bikhram yoga.",
+    "this book was very bad",
+    "i really love this book",
+    "i don't like cats",
+    "you're so cool !, you're my best friend"
 ]
 
-train_Y = [-1, 1, -1, 1, -1, 1]
+train_Y = [-1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1]
 
 test_X = [
     "i don't like to be sick",
-    "i like to discover new countries"
+    "i like to discover new countries",
+    "i don't like dogs",
+    "i dit not like vegetable",
+    "i love you"
 ]
 
-test_Y = [-1, 1]
+test_Y = [-1, 1, -1, -1, 1]
 
 models_datas = []
 confusion_matrix_container = {} 
