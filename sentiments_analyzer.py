@@ -1,43 +1,34 @@
+from os import error
+
+import numpy as np
 import pandas as pd
+from sklearn import tree
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Perceptron
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
-import csv
-import re
-#Need version 3.9 of Python
 
-#Librairies used : pandas, sklearn
-#pip install pandas, sklearn
+SCORES = ["Model", "Accuracy", "Precision", "Recall", "F-Score"]
+MATRIX_COL = ["True (-)", "False (+)"]
+MATRIX_IDX = ["False (-)", "True (+)"]
 
-#STEP 1 train our model
+def matrix_displayer(matrix):
 
-# DATASET_PATH = "archive/dataset.csv"
+    for key, data in matrix.items():
+        print(key + "\'s confusion matrix:")
+        try:
+            matrix_array = pd.DataFrame([data[0], data[1]], index=MATRIX_IDX, columns=MATRIX_COL)
+            print(matrix_array, end='\n'*2)
+        except IndexError:
+            error("Index out of range")
+            exit(84)
 
-# # CSV parser will get the sentitment and the sentence associate, from the csv file (dataset).
-# # We'll finally have an array of sentence and an array of sentiment?
-# with open(DATASET_PATH, encoding='latin-1') as my_file:
-#     csv_reader = csv.reader(my_file, delimiter=',')
-#     sentiment, sentence = zip(*((1 if int(row[0]) == 0 else -1, re.sub(r'[^A-z]+', ' ',row[len(row) - 1])) for row in csv_reader))
+def model_trainer():
+    pass
 
-#----------------------------------
-
-# TEST #
-# tmp = pd.DataFrame([model.coef_], columns=sorted(vectorizer.vocabulary_.keys()), index=['coef']).T
-
-# Here we create the pipeline
-# First we create our vectorizer, who is able to remove the stop_word
-# We are using the LinearRegression() model from sklearn
-
-# Tokenization / Vectorization
-# This Countvectorizer will transform our sentences in vector
-# will split each sentence in words (without stop_word),
-# and will finally create a matrix like this.
-#
-#        amazing  annoying  beautiful  gift  hate  idiot  love  stupid  ugly
-# text1        1         0          1     1     1      0     1       0     0
-# text2        0         1          0     0     1      1     0       1     1
-
-sentence = [
+train_X = [
     "i have a stomach ache, i'm in pain",
     "i love my honey",
     "i don't like the rain",
@@ -46,32 +37,114 @@ sentence = [
     "The Christmas markets are beautiful"
 ]
 
-sentiment = [
-    -1,
-    1,
-    -1,
-    1,
-    -1,
-    1
+train_Y = [-1, 1, -1, 1, -1, 1]
+
+test_X = [
+    "i don't like to be sick",
+    "i like to discover new countries"
 ]
 
+test_Y = [-1, 1]
+
+models_datas = []
+confusion_matrix_container = {} 
+
+######## Model: Linear Regression ########
+print("INFOS: Linear Regression training...")
 
 pipe = make_pipeline(
     CountVectorizer(stop_words='english'),
     LinearRegression()
 )
 
-# Here we give to our model:
-# - Our sentence array
-# - Our sentiment array (composed with -1 and 1)
-pipe.fit(sentence, sentiment)
+pipe.fit(train_X, train_Y)
+test_predictions = pipe.predict(test_X)
+test_predictions = list(map(lambda x: x.round() if x.round() == -1 else 1, test_predictions))
 
-#negative amazon commentary about an harry potter book
-print(pipe.predict(["I am very disappointed, I received a book with damaged corners"]))
+confusion_matrix_container["LinearRegression"] = confusion_matrix(test_Y, test_predictions)
 
-#positive amazon commentary about an harry potter book
-print(pipe.predict(["I'm frankly not disappointed, it's quite the opposite, I could not have hoped for better."]))
-print(pipe.predict(["i don't like to be sick"]))
-print(pipe.predict(["i like to discover new countries"]))
+models_datas.append([
+    "LinearRegression",
+    accuracy_score(test_Y, test_predictions),
+    precision_score(test_Y, test_predictions, average='micro'),
+    recall_score(test_Y, test_predictions, average='micro'),
+    f1_score(test_Y, test_predictions, average='micro')
+])
 
-#STEP 2 Evaluate this model
+######## Model: Perceptron ########
+print("INFOS: Perceptron training...")
+
+pipe = make_pipeline(
+    CountVectorizer(stop_words='english'),
+    Perceptron()
+)
+
+pipe.fit(train_X, train_Y)
+test_predictions = pipe.predict(test_X)
+
+confusion_matrix_container["Perceptron"] = confusion_matrix(test_Y, test_predictions)
+
+models_datas.append([
+    "Perceptron",
+    accuracy_score(test_Y, test_predictions),
+    precision_score(test_Y, test_predictions, average='micro'),
+    recall_score(test_Y, test_predictions, average='micro'),
+    f1_score(test_Y, test_predictions, average='micro')
+])
+
+######## Model: KNeighborsClassifier ########
+
+print("INFOS: KNeighborsClassifier training...")
+
+pipe = make_pipeline(
+    CountVectorizer(stop_words='english'),
+    KNeighborsClassifier(n_neighbors=3) #Try with 1, 3, 5, 7, 9 to compare
+)
+
+pipe.fit(train_X, train_Y)
+test_predictions = pipe.predict(test_X)
+
+confusion_matrix_container["KNeighborsClassifier"] = confusion_matrix(test_Y, test_predictions)
+
+models_datas.append([
+    "KNeighborsClassifier",
+    accuracy_score(test_Y, test_predictions),
+    precision_score(test_Y, test_predictions, average='micro'),
+    recall_score(test_Y, test_predictions, average='micro'),
+    f1_score(test_Y, test_predictions, average='micro')
+])
+
+######## Model: DecisionTreeClassifier ########
+
+print("INFOS: DecisionTreeClassifier training...")
+
+pipe = make_pipeline(
+    CountVectorizer(stop_words='english'),
+    tree.DecisionTreeClassifier()
+)
+
+pipe.fit(train_X, train_Y)
+test_predictions = pipe.predict(test_X)
+
+confusion_matrix_container["DecisionTreeClassifier"] = confusion_matrix(test_Y, test_predictions)
+
+models_datas.append([
+    "KNeighborsClassifier",
+    accuracy_score(test_Y, test_predictions),
+    precision_score(test_Y, test_predictions, average='micro'),
+    recall_score(test_Y, test_predictions, average='micro'),
+    f1_score(test_Y, test_predictions, average='micro')
+])
+
+tree.DecisionTreeClassifier()
+
+
+# Displaying
+
+comp_array = pd.DataFrame(models_datas, index=None, columns=SCORES)
+
+print("###### MODELS SCORES ######", end='\n'*2)
+print(comp_array, end='\n'*2)
+
+print("###### CONFUSIONS MATRIX ######", end='\n'*2)
+matrix_displayer(confusion_matrix_container)
