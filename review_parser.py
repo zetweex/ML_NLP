@@ -6,7 +6,6 @@ DOMAINS = ["books", "dvd", "kitchen_&_housewares", "electronics"]
 
 def review_file_to_dict(dataset_f):
 
-
     with open(dataset_f) as f:
         lines = f.readlines()
         review_dict = {}
