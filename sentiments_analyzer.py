@@ -24,6 +24,7 @@ FOLDER_RESULTS_PATH = "results/"
 RESULTS_PATH = "results.txt"
 MATRIX_PATH = "confusion_matrix.txt"
 
+
 #     ______                 __  _                 
 #    / ____/_  ______  _____/ /_(_)___  ____  _____
 #   / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
@@ -98,6 +99,10 @@ test_X = {}
 train_X_vectorized = {}
 test_X_vectorized = {}
 dico, datas_training = {}, {}
+all_training_X = []
+all_training_Y = []
+all_testing_X = []
+all_testing_Y = []
 
 vectorizer = CountVectorizer(stop_words='english', analyzer='word', ngram_range=(1, 2), tokenizer=my_tokenizer, lowercase=True)
 
@@ -143,15 +148,41 @@ for key, data in dico.items():
         datas_training[key]["text"].append(review["<review_text>"])
         datas_training[key]["polarity"].append(review["<polarity>"])
 
-######## Model: Baseline (DummyClassifier) ########
+
+# ______                _ _               _______                                 _____ _               _  __ _         __  
+# | ___ \              | (_)             / /  _  \                               /  __ \ |             (_)/ _(_)        \ \ 
+# | |_/ / __ _ ___  ___| |_ _ __   ___  | || | | |_   _ _ __ ___  _ __ ___  _   _| /  \/ | __ _ ___ ___ _| |_ _  ___ _ __| |
+# | ___ \/ _` / __|/ _ \ | | '_ \ / _ \ | || | | | | | | '_ ` _ \| '_ ` _ \| | | | |   | |/ _` / __/ __| |  _| |/ _ \ '__| |
+# | |_/ / (_| \__ \  __/ | | | | |  __/ | || |/ /| |_| | | | | | | | | | | | |_| | \__/\ | (_| \__ \__ \ | | | |  __/ |  | |
+# \____/ \__,_|___/\___|_|_|_| |_|\___| | ||___/  \__,_|_| |_| |_|_| |_| |_|\__, |\____/_|\__,_|___/___/_|_| |_|\___|_|  | |
+#                                        \_\                                 __/ |                                      /_/ 
+#                                                                           |___/                                           
+
 model_trainer("Baseline_Polarity", DummyClassifier(strategy="most_frequent"), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("Baseline_Domain", DummyClassifier(strategy="most_frequent"), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 model_trainer("Baseline_Rating", DummyClassifier(strategy="most_frequent"), train_X_vectorized["rating"], train_Y["rating"], test_X_vectorized["rating"], test_Y["rating"], confusion_matrix_container, models_datas, MATRIX_RATING)
 
-######## BONUS Model: Linear Regression ########
+
+#  _     _                        ______                             _             
+# | |   (_)                       | ___ \                           (_)            
+# | |    _ _ __   ___  __ _ _ __  | |_/ /___  __ _ _ __ ___  ___ ___ _  ___  _ __  
+# | |   | | '_ \ / _ \/ _` | '__| |    // _ \/ _` | '__/ _ \/ __/ __| |/ _ \| '_ \ 
+# | |___| | | | |  __/ (_| | |    | |\ \  __/ (_| | | |  __/\__ \__ \ | (_) | | | |
+# \_____/_|_| |_|\___|\__,_|_|    \_| \_\___|\__, |_|  \___||___/___/_|\___/|_| |_|
+#                                             __/ |                                
+#                                            |___/                                 
+
 model_trainer("Linear Regression", LinearRegression(), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
-######## Model: Perceptron ######## max_iter: the number of time the model will train
+
+# ______                       _                   
+# | ___ \                     | |                  
+# | |_/ /__ _ __ ___ ___ _ __ | |_ _ __ ___  _ __  
+# |  __/ _ \ '__/ __/ _ \ '_ \| __| '__/ _ \| '_ \ 
+# | | |  __/ | | (_|  __/ |_) | |_| | | (_) | | | |
+# \_|  \___|_|  \___\___| .__/ \__|_|  \___/|_| |_|
+#                       | |                        
+#                       |_|                        
 
 # This loop will browse the dict domain by domain (4 times) and train a Perceptron model for each domain
 for domain, datas in datas_training.items():
@@ -170,14 +201,29 @@ for domain, datas in datas_training.items():
     model_trainer("Perceptron_MaxIter30." + domain, Perceptron(max_iter = 30), datas_training[domain]["train_X"], datas_training[domain]["train_Y"], datas_training[domain]["test_X"], datas_training[domain]["test_Y"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
     model_trainer("Perceptron_MaxIter100." + domain, Perceptron(max_iter = 100), datas_training[domain]["train_X"], datas_training[domain]["train_Y"], datas_training[domain]["test_X"], datas_training[domain]["test_Y"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
-######## Model: KNeighborsClassifier ########
+
+#  _   __ _   _      _       _     _                    _____ _               _  __ _           
+# | | / /| \ | |    (_)     | |   | |                  /  __ \ |             (_)/ _(_)          
+# | |/ / |  \| | ___ _  __ _| |__ | |__   ___  _ __ ___| /  \/ | __ _ ___ ___ _| |_ _  ___ _ __ 
+# |    \ | . ` |/ _ \ |/ _` | '_ \| '_ \ / _ \| '__/ __| |   | |/ _` / __/ __| |  _| |/ _ \ '__|
+# | |\  \| |\  |  __/ | (_| | | | | |_) | (_) | |  \__ \ \__/\ | (_| \__ \__ \ | | | |  __/ |   
+# \_| \_/\_| \_/\___|_|\__, |_| |_|_.__/ \___/|_|  |___/\____/_|\__,_|___/___/_|_| |_|\___|_|   
+#                       __/ |                                                                   
+#                      |___/                                                                    
+
 model_trainer("KNeighborsClassifier_Neighbors1", KNeighborsClassifier(n_neighbors=1), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 model_trainer("KNeighborsClassifier_Neighbors5", KNeighborsClassifier(n_neighbors=5), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 model_trainer("KNeighborsClassifier_Neighbors20", KNeighborsClassifier(n_neighbors=20), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 model_trainer("KNeighborsClassifier_Neighbors100", KNeighborsClassifier(n_neighbors=100), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 model_trainer("KNeighborsClassifier_Neighbors1000", KNeighborsClassifier(n_neighbors=1000), train_X_vectorized["domain"], train_Y["domain"], test_X_vectorized["domain"], test_Y["domain"], confusion_matrix_container, models_datas, MATRIX_DOMAIN)
 
-######## Model: DecisionTreeClassifier ########
+
+# ______          _     _           _____             _____ _               _  __ _           
+# |  _  \        (_)   (_)         |_   _|           /  __ \ |             (_)/ _(_)          
+# | | | |___  ___ _ ___ _  ___  _ __ | |_ __ ___  ___| /  \/ | __ _ ___ ___ _| |_ _  ___ _ __ 
+# | | | / _ \/ __| / __| |/ _ \| '_ \| | '__/ _ \/ _ \ |   | |/ _` / __/ __| |  _| |/ _ \ '__|
+# | |/ /  __/ (__| \__ \ | (_) | | | | | | |  __/  __/ \__/\ | (_| \__ \__ \ | | | |  __/ |   
+# |___/ \___|\___|_|___/_|\___/|_| |_\_/_|  \___|\___|\____/_|\__,_|___/___/_|_| |_|\___|_|   
 
 model_trainer("DecisionTreeClassifier_MAXDepth1", tree.DecisionTreeClassifier(max_depth = 1), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("DecisionTreeClassifier_MAXDepth50", tree.DecisionTreeClassifier(max_depth = 50), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
@@ -190,7 +236,16 @@ model_trainer("DecisionTreeClassifier_MSLeaf25", tree.DecisionTreeClassifier(min
 model_trainer("DecisionTreeClassifier_Criterion.Gini", tree.DecisionTreeClassifier(criterion = "gini"), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("DecisionTreeClassifier_Criterion.Entropy", tree.DecisionTreeClassifier(criterion = "entropy"), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
-######## Model: Support Vector Machines ########
+
+#  _____                              _     _   _           _              ___  ___           _     _                 
+# /  ___|                            | |   | | | |         | |             |  \/  |          | |   (_)                
+# \ `--. _   _ _ __  _ __   ___  _ __| |_  | | | | ___  ___| |_ ___  _ __  | .  . | __ _  ___| |__  _ _ __   ___  ___ 
+#  `--. \ | | | '_ \| '_ \ / _ \| '__| __| | | | |/ _ \/ __| __/ _ \| '__| | |\/| |/ _` |/ __| '_ \| | '_ \ / _ \/ __|
+# /\__/ / |_| | |_) | |_) | (_) | |  | |_  \ \_/ /  __/ (__| || (_) | |    | |  | | (_| | (__| | | | | | | |  __/\__ \
+# \____/ \__,_| .__/| .__/ \___/|_|   \__|  \___/ \___|\___|\__\___/|_|    \_|  |_/\__,_|\___|_| |_|_|_| |_|\___||___/
+#             | |   | |                                                                                               
+#             |_|   |_|                                                                                               
+
 model_trainer("SupportVectorMachines_LINEAR1", svm.SVC(kernel='linear', C = 1), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("SupportVectorMachines_LINEAR100", svm.SVC(kernel='linear', C = 100), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("SupportVectorMachines_LINEAR1000", svm.SVC(kernel='linear', C = 1000), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
@@ -203,14 +258,30 @@ model_trainer("SupportVectorMachines_RBF.GAMMA0.01", svm.SVC(kernel='rbf', gamma
 model_trainer("SupportVectorMachines_RBF.GAMMA10", svm.SVC(kernel='rbf', gamma = 10), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 model_trainer("SupportVectorMachines_RBF.GAMMA200", svm.SVC(kernel='rbf', gamma = 200), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
-######## Model: Naive Bayes (Multinominal) ########
+
+#  _   _       _            ______                          ____  ___      _ _   _                       _             ___  
+# | \ | |     (_)           | ___ \                        / /  \/  |     | | | (_)                     (_)           | \ \ 
+# |  \| | __ _ ___   _____  | |_/ / __ _ _   _  ___  ___  | || .  . |_   _| | |_ _ _ __   ___  _ __ ___  _ _ __   __ _| || |
+# | . ` |/ _` | \ \ / / _ \ | ___ \/ _` | | | |/ _ \/ __| | || |\/| | | | | | __| | '_ \ / _ \| '_ ` _ \| | '_ \ / _` | || |
+# | |\  | (_| | |\ V /  __/ | |_/ / (_| | |_| |  __/\__ \ | || |  | | |_| | | |_| | | | | (_) | | | | | | | | | | (_| | || |
+# \_| \_/\__,_|_| \_/ \___| \____/ \__,_|\__, |\___||___/ | |\_|  |_/\__,_|_|\__|_|_| |_|\___/|_| |_| |_|_|_| |_|\__,_|_|| |
+#                                         __/ |            \_\                                                          /_/ 
+#                                        |___/                                                                              
+
 model_trainer("NaiveBayes_MultinomialNB.Rating", MultinomialNB(), train_X_vectorized["rating"], train_Y["rating"], test_X_vectorized["rating"], test_Y["rating"], confusion_matrix_container, models_datas, MATRIX_RATING)
 model_trainer("NaiveBayes_MultinomialNB.Polarity", MultinomialNB(), train_X_vectorized["polarity"], train_Y["polarity"], test_X_vectorized["polarity"], test_Y["polarity"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
-######## Knowledge transfer for domain-specific classifiers ########
+
+#  _   __                    _          _              _                        __          
+# | | / /                   | |        | |            | |                      / _|         
+# | |/ / _ __   _____      _| | ___  __| | __ _  ___  | |_ _ __ __ _ _ __  ___| |_ ___ _ __ 
+# |    \| '_ \ / _ \ \ /\ / / |/ _ \/ _` |/ _` |/ _ \ | __| '__/ _` | '_ \/ __|  _/ _ \ '__|
+# | |\  \ | | | (_) \ V  V /| |  __/ (_| | (_| |  __/ | |_| | | (_| | | | \__ \ ||  __/ |   
+# \_| \_/_| |_|\___/ \_/\_/ |_|\___|\__,_|\__, |\___|  \__|_|  \__,_|_| |_|___/_| \___|_|   
+#                                          __/ |                                            
+#                                         |___/                                             
 
 vectorizer = CountVectorizer(stop_words='english', analyzer='word', ngram_range=(1, 2), tokenizer=my_tokenizer, lowercase=True)
-
 dico, datas_training = {}, {}
 
 for review in parsed_files:
@@ -234,6 +305,12 @@ for domain, datas in datas_training.items():
     datas_training[domain]["test_Y"] = []
 
     datas_training[domain]["train_X"], datas_training[domain]["test_X"], datas_training[domain]["train_Y"], datas_training[domain]["test_Y"] = train_test_split(datas["text"], datas["polarity"], test_size=0.20)
+    
+    # Filling my list for the Domain_Oblivious part
+    all_testing_X += datas_training[domain]["test_X"]
+    all_testing_Y += datas_training[domain]["test_Y"]
+    all_training_X += datas_training[domain]["train_X"]
+    all_training_Y += datas_training[domain]["train_Y"]
 
 # Train a model with the training data of a specific domain, as well as with the test data of the other domains
 for domain, _datas in datas_training.items():
@@ -241,10 +318,26 @@ for domain, _datas in datas_training.items():
         model_trainer("Perceptron_MaxIter50." + domain + ".TestSet." + s_domain, Perceptron(max_iter = 50), vectorizer.fit_transform(datas_training[domain]["train_X"]), datas_training[domain]["train_Y"], vectorizer.transform(datas_training[s_domain]["test_X"]), datas_training[s_domain]["test_Y"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
 
 
+# ______                      _                  _     _ _       _                                   _       _                       _                                         
+# |  _  \                    (_)                | |   | (_)     (_)                                 | |     | |                     (_)                                        
+# | | | |___  _ __ ___   __ _ _ _ __ ______ ___ | |__ | |___   ___  ___  _   _ ___    __ _ _ __   __| |   __| | ___  _ __ ___   __ _ _ _ __ ______ __ ___      ____ _ _ __ ___ 
+# | | | / _ \| '_ ` _ \ / _` | | '_ \______/ _ \| '_ \| | \ \ / / |/ _ \| | | / __|  / _` | '_ \ / _` |  / _` |/ _ \| '_ ` _ \ / _` | | '_ \______/ _` \ \ /\ / / _` | '__/ _ \
+# | |/ / (_) | | | | | | (_| | | | | |    | (_) | |_) | | |\ V /| | (_) | |_| \__ \ | (_| | | | | (_| | | (_| | (_) | | | | | | (_| | | | | |    | (_| |\ V  V / (_| | | |  __/
+# |___/ \___/|_| |_| |_|\__,_|_|_| |_|     \___/|_.__/|_|_| \_/ |_|\___/ \__,_|___/  \__,_|_| |_|\__,_|  \__,_|\___/|_| |_| |_|\__,_|_|_| |_|     \__,_| \_/\_/ \__,_|_|  \___|
+
+# The 4 classifiers
+for domain, datas in datas_training.items():
+    model_trainer("Perceptron_MaxIter50_DomOblivious." + domain, Perceptron(max_iter = 50), vectorizer.fit_transform(datas_training[domain]["train_X"]), datas_training[domain]["train_Y"], vectorizer.transform(datas_training[domain]["test_X"]), datas_training[domain]["test_Y"], confusion_matrix_container, models_datas, MATRIX_POLARITY)
+
+# The fifth classifier
+model_trainer("Perceptron_MaxIter50_Domblivious.AllDatas", Perceptron(max_iter = 50), vectorizer.fit_transform(all_training_X), all_training_Y, vectorizer.transform(all_testing_X), all_testing_Y, confusion_matrix_container, models_datas, MATRIX_POLARITY)
+
 ### Send datas to the folder results (results.txt and confusion_matrix.txt will be inside)
 comp_array = pd.DataFrame(models_datas, index=None, columns=SCORES)
 
 # Models Scores
+pd.set_option('display.max_rows', len(comp_array) + 1)
+
 with open(FOLDER_RESULTS_PATH + RESULTS_PATH, 'w') as f:
     print(comp_array, file=f)
 
